@@ -1,0 +1,8 @@
+{
+    "schear-employd": {
+        "CRON_DRIVER": [
+            "0 5-19 * * *"
+        ],
+        "ENABLED": true
+    }
+}
