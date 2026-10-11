@@ -9,6 +9,7 @@
 - **Pack del pie:** empaca el pie con `side='bottom'` **antes** del contenido expandible; si no, el pie desaparece al achicar la ventana.
 - **Lista del `TCombobox`:** se tematiza con `root.option_add('*TCombobox*Listbox.*', ...)` y solo afecta a las listas que se abren después.
 - **Capturas con `ImageGrab`:** pon la ventana con `-topmost`, haz `update()` varias veces y espera unos 0,6 s. Si el usuario tiene otra ventana encima o la vista de escritorios abierta, la captura sale mal: repítela. Pillow no está en el venv de la app; usa otro venv que lo tenga.
+- **Actividades y las ejecuciones terminadas:** `refresh_ui` solo redibuja la pestaña visible, pero `ActivitiesPage.track(running)` corre en cada pasada. Si el registro de las que terminan depende de que la pestaña esté abierta, las que terminan mientras el usuario mira otra pestaña nunca aparecen (ya pasó).
 - **Variante de botón:** para cambiarla, asigna `button.variant` y llama `redraw()` (así se marca la pestaña activa).
 - **Ícono de la barra de tareas borroso:** pasaba con `iconphoto(256 px)`. Ahora se usa `iconbitmap(default=.ico)` + `WM_SETICON` con `LoadImageW` al tamaño exacto (24 y 16 × scale) y un `.ico` con cada tamaño (16–256) guardado aparte (`kreton.ico`, reescalado con Lanczos desde el logo). Sin `SetCurrentProcessExplicitAppUserModelID` y sin el AUMID en el `.lnk`, Windows muestra el ícono de Python o separa el botón del anclado.
 

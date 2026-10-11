@@ -1651,6 +1651,7 @@ class ActivitiesPage:
         s = app.scale
         self.frame = app.frame(master, 'bg')
         self.rows, self.items, self.finished = {}, {}, {}
+        self.seen = {}  # run_id -> lock of the runs seen running, to catch the ones that end
         self.selected = None
         self.view = None
         self.view_key = None
@@ -1671,6 +1672,17 @@ class ActivitiesPage:
         self.empty = app.label(self.detail, lambda: app.t('act.empty'), 'muted', 'bg')
         self.empty.place(relx=0.5, rely=0.4, anchor='center')
 
+    def track(self, running):
+        """Called every UI loop, whatever tab is shown: runs that ended while the app was open stay listed with their
+        final status until cleared."""
+        current = {lock['run_id']: lock for lock in running.values()}
+        ended = [key for key in self.seen if key not in current]
+        if ended:
+            history = {h.get('id'): h for h in self.app.scheduler.history()}
+            for key in ended:
+                self.finished[key] = {**self.seen[key], 'status': 'running', **history.get(key, {}), 'key': key, 'kind': 'finished'}
+        self.seen = current
+
     def refresh(self, running, queue):
         items = {}
         for bot, lock in sorted(running.items(), key=lambda kv: kv[1]['start']):
@@ -1678,12 +1690,6 @@ class ActivitiesPage:
         for bot, item in sorted(queue.items(), key=lambda kv: kv[1]['queued_at']):
             items[f'queued-{bot}'] = {'key': f'queued-{bot}', 'kind': 'queued', 'bot': bot, 'trigger': item['trigger'],
                                       'start': item['queued_at']}
-        ended = [key for key, old in self.items.items() if old['kind'] == 'running' and key not in items]
-        if ended:
-            # runs that ended while the app was open stay listed with their final status until cleared
-            history = {h.get('id'): h for h in self.app.scheduler.history()}
-            for key in ended:
-                self.finished[key] = {**self.items[key], **history.get(key, {}), 'key': key, 'kind': 'finished'}
         items.update({k: v for k, v in self.finished.items() if k not in items})
 
         if list(items) != list(self.rows):
@@ -3930,6 +3936,7 @@ class App:
                     self.set_project_status(name, lambda item=last: item_status(self, item)[0], item_status(self, last)[1])
                 else:
                     self.set_project_status(name, *self._default_status(self.projects[name]))
+        self.activities.track(running)
         if self.current_tab == 'activities':
             self.activities.refresh(running, queue)
         elif self.current_tab == 'history':
